@@ -5,7 +5,9 @@ import { Server } from "socket.io"
 import axios from "axios"
 
 dotenv.config()
+
 const app = express()
+app.use(express.json())
 
 const server = http.createServer(app)
 const port = process.env.PORT || 5000
@@ -24,6 +26,7 @@ io.on("connection", (socket) => {
         console.log(userId)
         await axios.post(`${process.env.NEXT_BASE_URL}/api/socket/connect`,{userId, socketId:socket.id})
     })
+
     socket.on("update-location", async ({ userId, latitude, longitude }) => {
         const location = {
             type: "Point",
@@ -32,12 +35,36 @@ io.on("connection", (socket) => {
         // console.log(userId)
         // console.log(latitude)
         // console.log(longitude)
-        await axios.post(`${process.env.NEXT_BASE_URL}/api/socket/update-location`,{userId,location})
+        await axios.post(`${process.env.NEXT_BASE_URL}/api/socket/update-location`, { userId, location })
+        io.emit("update-deliveryBoy-location",{userId, location})
+    })
+
+    socket.on("join-room", (roomId) => {
+        socket.join(roomId)
+        console.log("join room with", roomId)
     })
 
     socket.on("disconnect", () => {
         console.log("user disconnected", socket.id)
+  
     })
+})
+
+//io.emit("update-deliveryBoy-location",{userId, location})
+
+
+
+    
+
+
+app.post("/notify", (req, res) => {
+    const { event, data, socketId } = req.body
+    if (socketId) {
+        io.to(socketId).emit(event, data)
+    } else {
+        io.emit(event,data)
+    }
+    return res.status(200).json({"success":true})
 })
 
 
