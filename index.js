@@ -44,6 +44,10 @@ io.on("connection", (socket) => {
         console.log("join room with", roomId)
     })
 
+    socket.on("send-message", (message) => {
+        console.log(message)
+    })
+
     socket.on("disconnect", () => {
         console.log("user disconnected", socket.id)
   
